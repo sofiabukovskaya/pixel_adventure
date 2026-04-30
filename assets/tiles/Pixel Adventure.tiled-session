@@ -1,0 +1,29 @@
+{
+    "activeFile": "Pixel Adventure.tsx",
+    "expandedProjectPaths": [
+    ],
+    "fileStates": {
+        "Pixel Adventure.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        }
+    },
+    "last.imagePath": "/Users/sofiabykovskaya/StudioProjects/pixel_adventure/assets/images/Terrain",
+    "map.height": 23,
+    "map.lastUsedFormat": "tmx",
+    "map.tileHeight": 16,
+    "map.tileWidth": 16,
+    "map.width": 40,
+    "openFiles": [
+        "Pixel Adventure.tsx"
+    ],
+    "project": "Pixel Adventure.tiled-project",
+    "recentFiles": [
+        "Pixel Adventure.tsx"
+    ],
+    "tileset.lastUsedFormat": "tsx",
+    "tileset.tileSize": {
+        "height": 16,
+        "width": 16
+    }
+}
