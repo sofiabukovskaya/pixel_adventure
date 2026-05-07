@@ -26,6 +26,7 @@ flutter:
 
   assets:
     - assets/tiles/
+    - assets/images/HUD/
     - assets/images/Terrain/
     - assets/
     - assets/images/Main Characters/Mask Dude/

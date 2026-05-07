@@ -1,13 +1,16 @@
 import 'dart:async';
 
 import 'package:flame/components.dart';
+import 'package:flutter/services.dart';
 import 'package:pixel_adventure/pixel_adventure.dart';
 
 enum PlayerState { idle, running }
 
+enum PlayerDirection { left, right, none }
+
 class Player extends SpriteAnimationGroupComponent
-    with HasGameReference<PixelAdventure> {
-  Player({position, required this.character}) : super(position: position);
+    with HasGameReference<PixelAdventure>, KeyboardHandler {
+  Player({super.position, this.character = 'Ninja Frog'});
 
   String character;
 
@@ -16,11 +19,47 @@ class Player extends SpriteAnimationGroupComponent
 
   final double stepTime = 0.05;
 
+  PlayerDirection keyboardDirection = PlayerDirection.none;
+  PlayerDirection joystickDirection = PlayerDirection.none;
+  double moveSpeed = 100;
+  Vector2 velocity = Vector2.zero();
+  bool isFacingRight = true;
+
   @override
   FutureOr<void> onLoad() {
     _loadAllAnimations();
-
     return super.onLoad();
+  }
+
+  @override
+  void update(double dt) {
+    _updatePlayerMovement(dt);
+    super.update(dt);
+  }
+
+  @override
+  bool onKeyEvent(KeyEvent event, Set<LogicalKeyboardKey> keysPressed) {
+    final isLeftKeyPressed =
+        keysPressed.contains(LogicalKeyboardKey.arrowLeft) ||
+        keysPressed.contains(LogicalKeyboardKey.keyA);
+    final isRightKeyPressed =
+        keysPressed.contains(LogicalKeyboardKey.arrowRight) ||
+        keysPressed.contains(LogicalKeyboardKey.keyD);
+
+    if (isLeftKeyPressed && isRightKeyPressed) {
+      keyboardDirection = PlayerDirection.none;
+    } else if (isLeftKeyPressed) {
+      keyboardDirection = PlayerDirection.left;
+    } else if (isRightKeyPressed) {
+      keyboardDirection = PlayerDirection.right;
+    } else {
+      keyboardDirection = PlayerDirection.none;
+    }
+    return super.onKeyEvent(event, keysPressed);
+  }
+
+  void setJoystickDirection(PlayerDirection direction) {
+    joystickDirection = direction;
   }
 
   void _loadAllAnimations() {
@@ -45,5 +84,41 @@ class Player extends SpriteAnimationGroupComponent
         textureSize: Vector2.all(32),
       ),
     );
+  }
+
+  void _updatePlayerMovement(double dt) {
+    final playerDirection = _currentDirection();
+    double directionX = 0.0;
+    switch (playerDirection) {
+      case PlayerDirection.left:
+        if (isFacingRight) {
+          flipHorizontallyAroundCenter();
+          isFacingRight = false;
+        }
+        current = PlayerState.running;
+        directionX -= moveSpeed;
+        break;
+      case PlayerDirection.right:
+        if (!isFacingRight) {
+          flipHorizontallyAroundCenter();
+          isFacingRight = true;
+        }
+        current = PlayerState.running;
+        directionX += moveSpeed;
+        break;
+      case PlayerDirection.none:
+        current = PlayerState.idle;
+        break;
+    }
+
+    velocity = Vector2(directionX, 0.0);
+    position += velocity * dt;
+  }
+
+  PlayerDirection _currentDirection() {
+    if (joystickDirection != PlayerDirection.none) {
+      return joystickDirection;
+    }
+    return keyboardDirection;
   }
 }
