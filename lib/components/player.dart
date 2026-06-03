@@ -1,10 +1,15 @@
 import 'dart:async';
+import 'dart:math';
 
+import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/services.dart';
+import 'package:pixel_adventure/components/collision_bloc.dart';
+import 'package:pixel_adventure/components/player_hitbox.dart';
+import 'package:pixel_adventure/components/utils.dart';
 import 'package:pixel_adventure/pixel_adventure.dart';
 
-enum PlayerState { idle, running }
+enum PlayerState { idle, running, jumping, falling }
 
 class Player extends SpriteAnimationGroupComponent
     with HasGameReference<PixelAdventure>, KeyboardHandler {
@@ -14,16 +19,36 @@ class Player extends SpriteAnimationGroupComponent
 
   late final SpriteAnimation idleAnimation;
   late final SpriteAnimation runningAnimation;
+  late final SpriteAnimation jumpingAnimation;
+  late final SpriteAnimation fallingAnimation;
 
   final double stepTime = 0.05;
+
+  final double _gravity = 9.8;
+  final double _jumpForce = 460;
+  final double _terminalVelocity = 300;
 
   double horizontalMovement = 0;
   double moveSpeed = 100;
   Vector2 velocity = Vector2.zero();
+  bool isOnGround = false;
+  bool hasJumped = false;
+  List<CollisionBloc> collisionBlocks = [];
+  PlayerHitbox playerHitbox = PlayerHitbox(
+    offsetX: 10,
+    offsetY: 4,
+    width: 14,
+    height: 28,
+  );
 
   @override
   FutureOr<void> onLoad() {
     _loadAllAnimations();
+    add(RectangleHitbox(
+      position: Vector2(playerHitbox.offsetX, playerHitbox.offsetY),
+      size: Vector2(playerHitbox.width, playerHitbox.height),
+    ));
+
     return super.onLoad();
   }
 
@@ -31,6 +56,9 @@ class Player extends SpriteAnimationGroupComponent
   void update(double dt) {
     _updatePlayerState();
     _updatePlayerMovement(dt);
+    _checkHorizontalCollisions();
+    _applyGravity(dt);
+    _checkVerticalCollisions();
     super.update(dt);
   }
 
@@ -47,6 +75,8 @@ class Player extends SpriteAnimationGroupComponent
     horizontalMovement += isLeftKeyPressed ? -1 : 0;
     horizontalMovement += isRightKeyPressed ? 1 : 0;
 
+    hasJumped = keysPressed.contains(LogicalKeyboardKey.space);
+
     return super.onKeyEvent(event, keysPressed);
   }
 
@@ -54,10 +84,14 @@ class Player extends SpriteAnimationGroupComponent
     idleAnimation = _spriteAnimation('Idle', 11);
 
     runningAnimation = _spriteAnimation('Run', 12);
+    jumpingAnimation = _spriteAnimation('Jump', 1);
+    fallingAnimation = _spriteAnimation('Fall', 1);
 
     animations = {
       PlayerState.idle: idleAnimation,
       PlayerState.running: runningAnimation,
+      PlayerState.jumping: jumpingAnimation,
+      PlayerState.falling: fallingAnimation,
     };
 
     current = PlayerState.idle;
@@ -82,11 +116,78 @@ class Player extends SpriteAnimationGroupComponent
       flipHorizontallyAroundCenter();
     }
     if (velocity.x > 0 || velocity.x < 0) playerState = PlayerState.running;
+
+    if (velocity.y > 0) playerState = PlayerState.falling;
+    if (velocity.y < 0) playerState = PlayerState.jumping;
+
     current = playerState;
   }
 
   void _updatePlayerMovement(double dt) {
+    if (hasJumped && isOnGround) _playerJump(dt);
+
     velocity.x = horizontalMovement * moveSpeed;
     position.x += velocity.x * dt;
+  }
+
+  void _playerJump(double dt) {
+    velocity.y = -_jumpForce;
+    position.y += velocity.y * dt;
+    isOnGround = false;
+    hasJumped = false;
+  }
+
+  void _checkHorizontalCollisions() {
+    for (final bloc in collisionBlocks) {
+      if (!bloc.isPlatform) {
+        if (checkCollision(this, bloc)) {
+          if (velocity.x > 0) {
+            velocity.x = 0;
+            position.x = bloc.x - playerHitbox.offsetX - playerHitbox.width;
+            break;
+          }
+          if (velocity.x < 0) {
+            velocity.x = 0;
+            position.x = bloc.x + bloc.width + playerHitbox.width + playerHitbox.offsetX;
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  void _applyGravity(double dt) {
+    velocity.y += _gravity;
+    velocity.y = velocity.y.clamp(-_terminalVelocity, _terminalVelocity);
+    position.y += velocity.y * dt;
+  }
+
+  void _checkVerticalCollisions() {
+    for (final bloc in collisionBlocks) {
+      if (bloc.isPlatform) {
+        if (checkCollision(this, bloc)) {
+          if (velocity.y > 0) {
+            velocity.y = 0;
+            position.y = bloc.y - playerHitbox.height - playerHitbox.offsetY;
+            isOnGround = true;
+            break;
+          }
+        }
+      } else {
+        if (checkCollision(this, bloc)) {
+          if (velocity.y > 0) {
+            velocity.y = 0;
+            position.y = bloc.y - playerHitbox.height - playerHitbox.offsetY;
+            isOnGround = true;
+            break;
+          }
+          if (velocity.y < 0) {
+            velocity.y = 0;
+            position.y = bloc.y + bloc.height - playerHitbox.offsetY;
+            break;
+          }
+        }
+      }
+    }
   }
 }
