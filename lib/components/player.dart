@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
@@ -44,10 +43,12 @@ class Player extends SpriteAnimationGroupComponent
   @override
   FutureOr<void> onLoad() {
     _loadAllAnimations();
-    add(RectangleHitbox(
-      position: Vector2(playerHitbox.offsetX, playerHitbox.offsetY),
-      size: Vector2(playerHitbox.width, playerHitbox.height),
-    ));
+    add(
+      RectangleHitbox(
+        position: Vector2(playerHitbox.offsetX, playerHitbox.offsetY),
+        size: Vector2(playerHitbox.width, playerHitbox.height),
+      ),
+    );
 
     return super.onLoad();
   }
@@ -148,7 +149,8 @@ class Player extends SpriteAnimationGroupComponent
           }
           if (velocity.x < 0) {
             velocity.x = 0;
-            position.x = bloc.x + bloc.width + playerHitbox.width + playerHitbox.offsetX;
+            position.x =
+                bloc.x + bloc.width + playerHitbox.width + playerHitbox.offsetX;
             break;
           }
         }
@@ -158,7 +160,7 @@ class Player extends SpriteAnimationGroupComponent
 
   void _applyGravity(double dt) {
     velocity.y += _gravity;
-    velocity.y = velocity.y.clamp(-_terminalVelocity, _terminalVelocity);
+    velocity.y = velocity.y.clamp(-_jumpForce, _terminalVelocity);
     position.y += velocity.y * dt;
   }
 

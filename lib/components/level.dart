@@ -28,7 +28,9 @@ class Level extends World {
       }
     }
 
-    final collisionsLayer = level.tileMap.getLayer<ObjectGroup>('Collisions');
+    final collisionsLayer =
+        level.tileMap.getLayer<ObjectGroup>('Collisions') ??
+        level.tileMap.getLayer<ObjectGroup>('Collusions');
     if (collisionsLayer != null) {
       for (final collision in collisionsLayer.objects) {
         switch (collision.class_) {
