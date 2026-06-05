@@ -2,10 +2,12 @@ import 'dart:async';
 
 import 'package:flame/components.dart';
 import 'package:flame_tiled/flame_tiled.dart';
+import 'package:pixel_adventure/components/background_tile.dart';
 import 'package:pixel_adventure/components/collision_bloc.dart';
 import 'package:pixel_adventure/components/player.dart';
+import 'package:pixel_adventure/pixel_adventure.dart';
 
-class Level extends World {
+class Level extends World with HasGameReference<PixelAdventure> {
   final String levelName;
   final Player player;
 
@@ -17,6 +19,38 @@ class Level extends World {
   FutureOr<void> onLoad() async {
     level = await TiledComponent.load('$levelName.tmx', Vector2.all(16));
     add(level);
+
+    _scrollingBackground();
+    _spawningObjects();
+    _addCollisions();
+
+    return super.onLoad();
+  }
+
+  void _scrollingBackground() {
+    final backgroundLayer = level.tileMap.getLayer('Background');
+    const tileSize = 64;
+    final numTilesY = (game.size.y / tileSize).floor();
+    final numTilesX = (game.size.x / tileSize).floor();
+
+    if (backgroundLayer != null) {
+      final backgroundColor = backgroundLayer.properties.getValue(
+        'BackgroundColor',
+      );
+
+      for (double i = 0; i < game.size.y / numTilesY; i++) {
+        for (double j = 0; j < numTilesX; j++) {
+          final backgroundTile = BackgroundTile(
+            color: backgroundColor ?? 'Gray',
+            position: Vector2(j * tileSize, i * tileSize - tileSize),
+          );
+          add(backgroundTile);
+        }
+      }
+    }
+  }
+
+  void _spawningObjects() {
     final spawnPointsLayer = level.tileMap.getLayer<ObjectGroup>('Spawnpoints');
     if (spawnPointsLayer != null) {
       for (final spawnPoint in spawnPointsLayer.objects) {
@@ -27,7 +61,9 @@ class Level extends World {
         }
       }
     }
+  }
 
+  void _addCollisions() {
     final collisionsLayer =
         level.tileMap.getLayer<ObjectGroup>('Collisions') ??
         level.tileMap.getLayer<ObjectGroup>('Collusions');
@@ -54,6 +90,5 @@ class Level extends World {
       }
     }
     player.collisionBlocks = collisionsBlocks;
-    return super.onLoad();
   }
 }
