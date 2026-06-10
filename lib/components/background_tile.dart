@@ -5,7 +5,7 @@ import 'package:pixel_adventure/pixel_adventure.dart';
 
 class BackgroundTile extends SpriteComponent
     with HasGameReference<PixelAdventure> {
-  BackgroundTile({this.color = 'Gray', position}) : super(position: position);
+  BackgroundTile({this.color = 'Gray', super.position});
 
   final String color;
 

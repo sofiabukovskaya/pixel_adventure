@@ -8,8 +8,12 @@ import 'package:pixel_adventure/pixel_adventure.dart';
 class Fruit extends SpriteAnimationComponent
     with HasGameReference<PixelAdventure>, CollisionCallbacks {
   final String fruit;
-  Fruit({this.fruit = 'Apple', position, size})
-    : super(position: position, size: size, removeOnFinish: true);
+  Fruit({
+    this.fruit = 'Apple',
+    super.position,
+    super.size,
+    super.resetOnRemove = true,
+  });
 
   bool _collected = false;
   final stepTime = 0.05;
@@ -22,7 +26,7 @@ class Fruit extends SpriteAnimationComponent
       RectangleHitbox(
         position: Vector2(hitbox.offsetX, hitbox.offsetY),
         size: Vector2(hitbox.width, hitbox.height),
-        collisionType: CollisionType.passive
+        collisionType: CollisionType.passive,
       ),
     );
     animation = SpriteAnimation.fromFrameData(
@@ -36,8 +40,8 @@ class Fruit extends SpriteAnimationComponent
     return super.onLoad();
   }
 
-  void collidedWithPlayer(){
-    if(!_collected) {
+  void collidedWithPlayer() {
+    if (!_collected) {
       animation = SpriteAnimation.fromFrameData(
         game.images.fromCache('Items/Fruits/Collected.png'),
         SpriteAnimationData.sequenced(
