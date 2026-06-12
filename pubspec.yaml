@@ -32,6 +32,7 @@ flutter:
     - assets/images/Terrain/
     - assets/images/Background/
     - assets/images/Traps/Saw/
+    - assets/images/Enemies/Chicken/
     - assets/images/Main Characters/
     - assets/images/Items/Checkpoints/Checkpoint/
     - assets/
