@@ -9,15 +9,15 @@ class Checkpoint extends SpriteAnimationComponent
     with HasGameReference<PixelAdventure>, CollisionCallbacks {
   Checkpoint({super.position, super.size});
 
-  bool reachedCheckpoint = false;
-
   @override
   FutureOr<void> onLoad() {
-    add(RectangleHitbox(
-      position: Vector2(18, 56),
-      size: Vector2(12, 8),
-      collisionType: CollisionType.passive,
-    ));
+    add(
+      RectangleHitbox(
+        position: Vector2(18, 56),
+        size: Vector2(12, 8),
+        collisionType: CollisionType.passive,
+      ),
+    );
     animation = SpriteAnimation.fromFrameData(
       game.images.fromCache(
         'Items/Checkpoints/Checkpoint/Checkpoint (No Flag).png',
@@ -32,13 +32,15 @@ class Checkpoint extends SpriteAnimationComponent
   }
 
   @override
-  void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
-    if (other is Player && !reachedCheckpoint) _reachedCheckpoint();
-    super.onCollision(intersectionPoints, other);
+  void onCollisionStart(
+    Set<Vector2> intersectionPoints,
+    PositionComponent other,
+  ) {
+    if (other is Player) _reachedCheckpoint();
+    super.onCollisionStart(intersectionPoints, other);
   }
 
-  void _reachedCheckpoint() {
-    reachedCheckpoint = true;
+  void _reachedCheckpoint() async {
     animation = SpriteAnimation.fromFrameData(
       game.images.fromCache(
         'Items/Checkpoints/Checkpoint/Checkpoint (Flag Out) (64x64).png',
@@ -47,22 +49,22 @@ class Checkpoint extends SpriteAnimationComponent
         amount: 26,
         stepTime: 0.05,
         textureSize: Vector2.all(64),
-        loop: false
+        loop: false,
       ),
     );
-    const flagDuration = Duration(milliseconds: 1300);
 
-    Future.delayed(flagDuration, () {
-      animation = SpriteAnimation.fromFrameData(
-        game.images.fromCache(
-          'Items/Checkpoints/Checkpoint/Checkpoint (Flag Idle)(64x64).png',
-        ),
-        SpriteAnimationData.sequenced(
-            amount: 10,
-            stepTime: 0.05,
-            textureSize: Vector2.all(64),
-        ),
-      );
-    });
+    await animationTicker?.completed;
+
+    animation = SpriteAnimation.fromFrameData(
+      game.images.fromCache(
+        'Items/Checkpoints/Checkpoint/Checkpoint (Flag Idle)(64x64).png',
+      ),
+      SpriteAnimationData.sequenced(
+        amount: 10,
+        stepTime: 0.05,
+        textureSize: Vector2.all(64),
+      ),
+    );
+
   }
 }
