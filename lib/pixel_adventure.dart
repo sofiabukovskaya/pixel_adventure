@@ -4,37 +4,40 @@ import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
-import 'package:pixel_adventure/components/jump_button.dart';
-import 'package:pixel_adventure/components/level.dart';
-
-import 'components/player.dart';
+import 'package:pixel_adventure/components/actors/player.dart';
+import 'package:pixel_adventure/components/hud/jump_button.dart';
+import 'package:pixel_adventure/components/world/level.dart';
+import 'package:pixel_adventure/core/audio.dart';
 
 class PixelAdventure extends FlameGame
     with
         HasKeyboardHandlerComponents,
         DragCallbacks,
         HasCollisionDetection,
-        TapCallbacks {
+        TapCallbacks,
+        SoundEffects {
+  static const _resolution = (width: 640.0, height: 360.0);
+  static const _levelTransitionDelay = Duration(seconds: 1);
+
   late CameraComponent cam;
   late JoystickComponent joystick;
 
   bool showControls = true;
-  bool playSound = true;
-  double soundVolume = 0.3;
 
-  Player player = Player(character: 'Mask Dude');
-  List<String> levelNames = ['Level-01', 'Level-01'];
+  final Player player = Player(character: 'Mask Dude');
+  final List<String> levelNames = ['Level-01', 'Level-01'];
   int currentLevelIndex = 0;
 
   @override
-  Color backgroundColor() => Color(0xFF211F30);
+  Color backgroundColor() => const Color(0xFF211F30);
 
   @override
   FutureOr<void> onLoad() async {
     await images.loadAllImages();
     _loadLevel();
+
     if (showControls) {
-      addJoystick();
+      _addJoystick();
       add(JumpButton());
     }
     return super.onLoad();
@@ -42,11 +45,20 @@ class PixelAdventure extends FlameGame
 
   @override
   void update(double dt) {
-    if (showControls) updateJoystick();
+    if (showControls) _readJoystick();
     super.update(dt);
   }
 
-  void addJoystick() {
+  void loadNextLevel() {
+    removeWhere((component) => component is Level);
+
+    currentLevelIndex = (currentLevelIndex < levelNames.length - 1)
+        ? currentLevelIndex + 1
+        : 0;
+    _loadLevel();
+  }
+
+  void _addJoystick() {
     joystick = JoystickComponent(
       priority: 10,
       knob: SpriteComponent(sprite: Sprite(images.fromCache('HUD/Knob.png'))),
@@ -58,43 +70,27 @@ class PixelAdventure extends FlameGame
     add(joystick);
   }
 
-  void updateJoystick() {
-    switch (joystick.direction) {
-      case JoystickDirection.left:
-      case JoystickDirection.upLeft:
-      case JoystickDirection.downLeft:
-        player.horizontalMovement = -1;
-        break;
-      case JoystickDirection.right:
-      case JoystickDirection.upRight:
-      case JoystickDirection.downRight:
-        player.horizontalMovement = 1;
-        break;
-      default:
-        return;
-    }
-  }
-
-  void loadNextLevel() {
-    removeWhere((component) => component is Level);
-    if (currentLevelIndex < levelNames.length - 1) {
-      currentLevelIndex++;
-      _loadLevel();
-    } else {
-      currentLevelIndex = 0;
-      _loadLevel();
-    }
+  void _readJoystick() {
+    player.horizontalMovement = switch (joystick.direction) {
+      JoystickDirection.left ||
+      JoystickDirection.upLeft ||
+      JoystickDirection.downLeft => -1,
+      JoystickDirection.right ||
+      JoystickDirection.upRight ||
+      JoystickDirection.downRight => 1,
+      _ => player.horizontalMovement,
+    };
   }
 
   void _loadLevel() {
-    Future.delayed(const Duration(seconds: 1), () {
-      Level world = Level(
+    Future.delayed(_levelTransitionDelay, () {
+      final world = Level(
         levelName: levelNames[currentLevelIndex],
         player: player,
       );
       cam = CameraComponent.withFixedResolution(
-        width: 640,
-        height: 360,
+        width: _resolution.width,
+        height: _resolution.height,
         world: world,
       );
       cam.viewfinder.anchor = Anchor.topLeft;
