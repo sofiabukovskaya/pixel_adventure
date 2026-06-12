@@ -17,7 +17,10 @@ class PixelAdventure extends FlameGame
         TapCallbacks {
   late CameraComponent cam;
   late JoystickComponent joystick;
+
   bool showControls = true;
+  bool playSound = true;
+  double soundVolume = 0.3;
 
   Player player = Player(character: 'Mask Dude');
   List<String> levelNames = ['Level-01', 'Level-01'];
@@ -77,7 +80,10 @@ class PixelAdventure extends FlameGame
     if (currentLevelIndex < levelNames.length - 1) {
       currentLevelIndex++;
       _loadLevel();
-    } else {}
+    } else {
+      currentLevelIndex = 0;
+      _loadLevel();
+    }
   }
 
   void _loadLevel() {

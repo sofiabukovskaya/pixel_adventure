@@ -14,6 +14,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   flame: ^1.37.0
   flame_tiled: ^3.1.1
+  flame_audio: ^2.12.1
 
 dev_dependencies:
   flutter_test:
@@ -34,6 +35,7 @@ flutter:
     - assets/images/Main Characters/
     - assets/images/Items/Checkpoints/Checkpoint/
     - assets/
+    - assets/audio/
     - assets/images/Main Characters/Mask Dude/
     - assets/images/Main Characters/Ninja Frog/
     - assets/images/Main Characters/Pink Man/
